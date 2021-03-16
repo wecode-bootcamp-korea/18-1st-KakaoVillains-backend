@@ -6,10 +6,10 @@ from product.models import Product
 class Feed(models.Model):
     user            = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     content         = models.TextField()
-    reply_count     = models.Int(default=0)
-    like_count      = models.Int(default=0)
+    reply_count     = models.IntegerField(default=0)
+    like_count      = models.IntegerField(default=0)
     created_at      = models.DateTimeField(auto_now=False, auto_now_add=True)
-    title = models.CharField(max_length=100)
+    title           = models.CharField(max_length=100)
 
     class Meta:
         db_table = 'feeds'
@@ -22,7 +22,7 @@ class FeedImage(models.Model):
         db_table = 'feed_images'
 
 class FeedLike(models.Model):
-    user = models.ForeignKey(User, on_delete=models.SET_NULL)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     feed = models.ForeignKey(Feed, on_delete=models.CASCADE)
 
     class Meta:
@@ -30,19 +30,19 @@ class FeedLike(models.Model):
 
 
 class Reply(models.Model):
-    user       = models.ForeignKey(User, on_delete=models.SET_NULL)
+    user       = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     feed       = models.ForeignKey(Feed, on_delete=models.CASCADE)
     content    = models.TextField()
-    like_count = models.Int(default=0)
+    like_count = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now=False, auto_now_add=True)
-    reply      = models.ForeignKey('self', on_delete=models.CASCADE)
+    reply      = models.ForeignKey('self', on_delete=models.CASCADE, null=True)
 
     class Meta:
         db_table = 'replies'
 
 class ReplyLike(models.Model):
     reply = models.ForeignKey(Reply, on_delete=models.CASCADE)
-    user  = models.ForeignKey(User, on_delete=models.SET_NULL)
+    user  = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     
     class Meta:
         db_table = 'reply_likes'
