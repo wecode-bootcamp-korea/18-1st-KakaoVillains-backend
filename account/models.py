@@ -1,6 +1,6 @@
 from django.db import models
 
-class User(models.Models):
+class User(models.Model):
     username        = models.CharField(max_length=45)
     password        = models.CharField(max_length=1000)
     admin           = models.BooleanField(default=False)
