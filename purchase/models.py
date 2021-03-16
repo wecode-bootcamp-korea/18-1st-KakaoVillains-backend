@@ -44,6 +44,10 @@ class Transaction(models.Model):
     credit_card = models.ForeignKey(CreditCard, on_delete=models.SET_NULL, null=True)
     created_at  = models.DateTimeField(auto_now=False, auto_now_add=True)
     status      = models.CharField(max_length=45, default='Payment in progress')
+    
+    class Meta:
+        db_table = 'transactions'
+
 """
 Transaction Status:
     1. Payment in progress: 결제 중
@@ -52,10 +56,6 @@ Transaction Status:
     4. Shiped: 배송 중
     5. Delivered: 배송 완료
 """
-   
-    class Meta:
-        db_table = 'transactions'
-
 
 class PurchasedProduct(models.Model):
     product     = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)

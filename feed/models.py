@@ -35,7 +35,7 @@ class Reply(models.Model):
     content    = models.TextField()
     like_count = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now=False, auto_now_add=True)
-    reply      = models.ForeignKey('self', on_delete=models.CASCADE, null=True)
+    parent      = models.ForeignKey('self', on_delete=models.CASCADE, null=True)
 
     class Meta:
         db_table = 'replies'
