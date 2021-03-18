@@ -10,10 +10,7 @@ class Feed(models.Model):
     like_count      = models.IntegerField(default=0)
     created_at      = models.DateTimeField(auto_now_add=True)
     title           = models.CharField(max_length=100)
-    product         = models.ManyToManyField(
-        Product,
-        through='RecommendedProduct'
-    )
+    products        = models.ManyToManyField(Product,through='RecommendedProduct')
 
     class Meta:
         db_table = 'feeds'

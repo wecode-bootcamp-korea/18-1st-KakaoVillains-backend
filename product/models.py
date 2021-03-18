@@ -4,12 +4,8 @@ from account.models import User
 
 class Character(models.Model):
     name = models.CharField(max_length=45, unique=True)
-    product = models.ManyToManyField(
-        'Product',
-        through='CharacterProduct',
-        related_name='hero'
-    )
-    # ex) Product.hero.name = 'Ryan'
+    products = models.ManyToManyField('Product', through='CharacterProduct')
+
     class Meta:
         db_table = 'characters'
 
@@ -36,7 +32,7 @@ class Product(models.Model):
     updated_at     = models.DateTimeField(auto_now=True)
     description    = models.TextField(null=True)
     created_at     = models.DateTimeField(auto_now_add=True)
-
+    
     class Meta:
         db_table = 'products'
 

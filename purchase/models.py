@@ -42,24 +42,17 @@ class Transaction(models.Model):
     address     = models.ForeignKey(Address, on_delete=models.SET_NULL, null=True)
     credit_card = models.ForeignKey(CreditCard, on_delete=models.SET_NULL, null=True)
     created_at  = models.DateTimeField(auto_now_add=True)
-    status      = models.IntegerField(default=1)
-    product     = models.ManyToManyField(
-        Product,
-        through='PurchasedProduct',
-        related_name='buyed'
-    )
+    status      = models.ForeignKey('Status', on_delete=models.SET_NULL, null=True)
+    products    = models.ManyToManyField(Product, through='PurchasedProduct')
     
     class Meta:
         db_table = 'transactions'
 
-"""
-Transaction Status:
-    1. Payment in progress: 결제 중
-    2. Paid: 결제 완료
-    3. Shipment in progress: 배송 준비 중
-    4. Shiped: 배송 중
-    5. Delivered: 배송 완료
-"""
+class Status(models.Model):
+    condition   = models.CharField(max_length=45)
+
+    class Meta:
+        db_table = 'statuses'
 
 class PurchasedProduct(models.Model):
     product     = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
