@@ -4,7 +4,12 @@ from account.models import User
 
 class Character(models.Model):
     name = models.CharField(max_length=45, unique=True)
-
+    product = models.ManyToManyField(
+        'Product',
+        through='CharacterProduct',
+        related_name='hero'
+    )
+    # ex) Product.hero.name = 'Ryan'
     class Meta:
         db_table = 'characters'
 
@@ -28,8 +33,9 @@ class Product(models.Model):
     review_count   = models.IntegerField(default=0)
     sub_category   = models.ForeignKey(SubCategory, on_delete=models.SET_NULL, null=True)
     discount_rate  = models.DecimalField(max_digits=3, decimal_places=1, default=0)
+    updated_at     = models.DateTimeField(auto_now=True)
     description    = models.TextField(null=True)
-    created_at     = models.DateTimeField(auto_now=False, auto_now_add=True)
+    created_at     = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         db_table = 'products'
@@ -54,7 +60,7 @@ class Review(models.Model):
     user       = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     product    = models.ForeignKey(Product, on_delete=models.CASCADE)
     rating     = models.IntegerField()
-    created_at = models.DateTimeField(auto_now=False, auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True)
     like_count = models.IntegerField(default=0)
     content    = models.TextField()
 

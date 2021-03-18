@@ -8,8 +8,12 @@ class Feed(models.Model):
     content         = models.TextField()
     reply_count     = models.IntegerField(default=0)
     like_count      = models.IntegerField(default=0)
-    created_at      = models.DateTimeField(auto_now=False, auto_now_add=True)
+    created_at      = models.DateTimeField(auto_now_add=True)
     title           = models.CharField(max_length=100)
+    product         = models.ManyToManyField(
+        Product,
+        through='RecommendedProduct'
+    )
 
     class Meta:
         db_table = 'feeds'
@@ -34,8 +38,8 @@ class Reply(models.Model):
     feed       = models.ForeignKey(Feed, on_delete=models.CASCADE)
     content    = models.TextField()
     like_count = models.IntegerField(default=0)
-    created_at = models.DateTimeField(auto_now=False, auto_now_add=True)
-    parent      = models.ForeignKey('self', on_delete=models.CASCADE, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    parent       = models.ForeignKey('self', on_delete=models.CASCADE, null=True)
 
     class Meta:
         db_table = 'replies'

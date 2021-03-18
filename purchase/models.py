@@ -28,9 +28,8 @@ class Address(models.Model):
 
 class CreditCard(models.Model):
     name        = models.CharField(max_length=45)
-    card_number = models.CharField(max_length=45)
+    card_number = models.CharField(max_length=2000)
     expiration  = models.CharField(max_length=45)
-    cvc         = models.CharField(max_length=3)
     user        = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
     default     = models.BooleanField(default=False)
 
@@ -42,8 +41,13 @@ class Transaction(models.Model):
     user        = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     address     = models.ForeignKey(Address, on_delete=models.SET_NULL, null=True)
     credit_card = models.ForeignKey(CreditCard, on_delete=models.SET_NULL, null=True)
-    created_at  = models.DateTimeField(auto_now=False, auto_now_add=True)
-    status      = models.CharField(max_length=45, default='Payment in progress')
+    created_at  = models.DateTimeField(auto_now_add=True)
+    status      = models.IntegerField(default=1)
+    product     = models.ManyToManyField(
+        Product,
+        through='PurchasedProduct',
+        related_name='buyed'
+    )
     
     class Meta:
         db_table = 'transactions'
