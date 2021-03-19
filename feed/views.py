@@ -5,9 +5,10 @@ from django.http      import JsonResponse
 from django.db.models import Q
 from django.core      import exceptions
 
-from feed.models    import Feed, FeedImage, Reply
+from feed.models    import Feed, FeedImage, Reply, FeedLike
 from account.models import User
 from product.models import Product, ProductImage
+# from utils.decorators import authenticator
 
 
 class FeedIndexView(View):
@@ -119,8 +120,8 @@ class FeedView(View):
         except Feed.MultipleObjectsReturned:
             return JsonResponse({'message': 'INVALID FEED_ID'}, status=400)
             
-
 class ReplyView(View):
+    # @authenticator
     def post(self, request):
         try:
             data      = json.loads(request.body)
@@ -144,3 +145,27 @@ class ReplyView(View):
         
         except Feed.DoesNotExist:
             return JsonResponse({'message': 'INVALID_FEED'}, status=400)
+
+class FeedLikeView(View):
+    # @authenticator    
+    def post(self, request, feed_id):
+        try:
+            feed      = Feed.objects.get(id=feed_id)
+            feed_like = FeedLike.objects.filter(feed_id=feed_id, user_id=request.user.id) 
+
+            if feed_like:
+                feed_like.delete()
+                feed.like_count -= 1
+                feed.save()
+            else:
+                FeedLike.objects.create(feed_id=feed.id, user_id=request.user.id)
+                feed.like_count += 1
+                feed.save()
+
+            return JsonResponse({'message': 'SUCCESS'}, status=201)
+        
+        except Feed.DoesNotExist:
+            return JsonResponse({'message': 'INVALID FEED_ID'}, status=400)
+
+        except Feed.MultipleObjectsReturned:
+            return JsonResponse({'message': 'INVALID FEED_ID'}, status=400)
