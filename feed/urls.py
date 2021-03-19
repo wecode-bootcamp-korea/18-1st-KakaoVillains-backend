@@ -4,6 +4,6 @@ from feed.views import FeedIndexView, FeedView
 
 
 urlpatterns = [
-    path('/feedindex', FeedIndexView.as_view()),
-    path('/feed', FeedView.as_view())
+    path('/feeds', FeedIndexView.as_view()),
+    path('/<int:feed_id>', FeedView.as_view())
 ]

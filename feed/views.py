@@ -20,7 +20,7 @@ class FeedIndexView(View):
             image_urls         = FeedImage.objects.filter(feed_id=feed.id)
             image_url          = [element.image_url for element in image_urls]
             user               = User.objects.get(id=feed.user_id)
-            reply              = Reply.objects.filter(Q(feed_id=feed.id) & Q(parent_id=None)).order_by('created_at').last()
+            reply              = Reply.objects.filter(feed_id=feed.id, parent_id=None).order_by('created_at').last()
             recommend_products = Feed.objects.get(id=feed.id).products.all()
             
             if not reply:
@@ -50,10 +50,11 @@ class FeedIndexView(View):
                 'image_url'          : image_url,
                 'profile_picture'    : user.profile_picture_url,
                 'like_count'         : feed.like_count,
+                'datetime'           : feed.created_at,
                 'reply_count'        : feed.reply_count,
                 'reply_username'     : reply_username,
                 'reply'              : reply_content,
-                'recommend_products' : recommend_product
+                'recommend_products' : recommend_product,
             }
 
             result.append(my_dict)
@@ -61,10 +62,9 @@ class FeedIndexView(View):
         return JsonResponse({'result' : result}, status=200)
 
 class FeedView(View):
-    def post(self, request):
+    def get(self, request, feed_id):
         try:
-            data        = json.loads(request.body)
-            feed        = Feed.objects.get(id=data['feed_id'])
+            feed        = Feed.objects.get(id=feed_id)
             feed_images = FeedImage.objects.filter(feed_id=feed.id)
             image_url   = [element.image_url for element in feed_images]
             replies     = feed.reply_set.all()
@@ -90,7 +90,6 @@ class FeedView(View):
                         'reply_id'       : reply.parent_id
                     }
                     reply_of_reply_list.append(reply_of_reply_dict)
-                
 
             result = []
 
