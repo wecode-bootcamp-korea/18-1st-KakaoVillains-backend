@@ -51,3 +51,6 @@ class ReplyLike(models.Model):
 class RecommendedProduct(models.Model):
     feed    = models.ForeignKey(Feed, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    
+    class Meta:
+        db_table = 'recommended_products'
