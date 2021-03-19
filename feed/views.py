@@ -50,7 +50,7 @@ class FeedIndexView(View):
                 'image_url'          : image_url,
                 'profile_picture'    : user.profile_picture_url,
                 'like_count'         : feed.like_count,
-                'datetime'           : feed.created_at,
+                'datetime'           : feed.created_at.strftime('%Y.%m.%d'),
                 'reply_count'        : feed.reply_count,
                 'reply_username'     : reply_username,
                 'reply'              : reply_content,
@@ -115,3 +115,32 @@ class FeedView(View):
 
         except Feed.DoesNotExist:
             return JsonResponse({'message': 'INVALID FEED_ID'}, status=400)
+
+        except Feed.MultipleObjectsReturned:
+            return JsonResponse({'message': 'INVALID FEED_ID'}, status=400)
+            
+
+class ReplyView(View):
+    def post(self, request):
+        try:
+            data      = json.loads(request.body)
+            feed_id   = request.GET.get('feed_id')
+            parent_id = request.GET.get('parent_id', None)
+            feed      = Feed.objects.get(id=feed_id)
+
+            if not data.get('content'):
+                return JsonResponse({'message': 'Type content'}, status=400)
+
+            Reply.objects.create(content=data['content'], feed_id=feed_id, parent_id=parent_id, user_id=request.user.id)
+
+            if not parent_id:
+                feed.reply_count += 1
+                feed.save()
+
+            return JsonResponse({'message': 'SUCCSESS'}, status=201)
+
+        except json.JSONDecodeError:    
+            return JsonResponse({'message': 'JSON_DECODE_ERROR'}, status=400)
+        
+        except Feed.DoesNotExist:
+            return JsonResponse({'message': 'INVALID_FEED'}, status=400)
