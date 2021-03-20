@@ -163,6 +163,28 @@ class ReplyView(View):
 
         except Reply.DoesNotExist:
             return JsonResponse({'message': 'INVALID_REPLY'}, status=400)
+    
+    # @authenticator
+    def patch(self, request):
+        try:
+            data     = json.loads(request.body)
+            reply_id = request.GET.get('reply_id')
+            reply    = Reply.objects.get(id=reply_id, user_id=request.user.id)
+            
+            if not data.get('content'):
+                return JsonResponse({'message': 'Type content'}, status=400)
+            
+            reply.content = data['content']
+            reply.save()
+
+            return JsonResponse({'message': 'SUCCESS'}, status=200)
+        
+        except json.JSONDecodeError:    
+            return JsonResponse({'message': 'JSON_DECODE_ERROR'}, status=400)
+
+        except Reply.DoesNotExist:
+            return JsonResponse({'message': 'INVALID_REPLY'}, status=400)
+        
 
 class FeedLikeView(View):
     # @authenticator    
