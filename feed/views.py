@@ -5,7 +5,7 @@ from django.http      import JsonResponse
 from django.db.models import Q
 from django.core      import exceptions
 
-from feed.models    import Feed, FeedImage, Reply, FeedLike
+from feed.models    import Feed, FeedImage, Reply, FeedLike, ReplyLike
 from account.models import User
 from product.models import Product, ProductImage
 # from utils.decorators import authenticator
@@ -13,7 +13,7 @@ from product.models import Product, ProductImage
 
 class FeedIndexView(View):
     def get(self, request):
-        feeds       = Feed.objects.all()
+        feeds       = Feed.objects.all().order_by('-created_at')
         feed_images = FeedImage.objects.all()
 
         result = []
@@ -68,7 +68,7 @@ class FeedView(View):
             feed        = Feed.objects.get(id=feed_id)
             feed_images = FeedImage.objects.filter(feed_id=feed.id)
             image_url   = [element.image_url for element in feed_images]
-            replies     = feed.reply_set.all()
+            replies     = feed.reply_set.all().order_by('-created_at')
 
             reply_list = []
             reply_of_reply_list = []
@@ -79,6 +79,7 @@ class FeedView(View):
                         'reply'          : reply.content,
                         'reply_username' : reply.user.username,
                         'like_count'     : reply.like_count,
+                        'datetime'       : reply.created_at.strftime('%Y-%m-%d')
                     }
                     reply_list.append(reply_dict)
                 
@@ -88,7 +89,8 @@ class FeedView(View):
                         'reply'          : reply.content,
                         'reply_username' : reply.user.username,
                         'like_count'     : reply.like_count,
-                        'reply_id'       : reply.parent_id
+                        'reply_id'       : reply.parent_id,
+                        'datetime'       : reply.created_at.strftime('%Y-%m-%d')
                     }
                     reply_of_reply_list.append(reply_of_reply_dict)
 
@@ -117,16 +119,13 @@ class FeedView(View):
         except Feed.DoesNotExist:
             return JsonResponse({'message': 'INVALID FEED_ID'}, status=400)
 
-        except Feed.MultipleObjectsReturned:
-            return JsonResponse({'message': 'INVALID FEED_ID'}, status=400)
-            
 class ReplyView(View):
     # @authenticator
     def post(self, request):
         try:
             data      = json.loads(request.body)
             feed_id   = request.GET.get('feed_id')
-            parent_id = request.GET.get('parent_id', None)
+            parent_id = request.GET.get('parent_id')
             feed      = Feed.objects.get(id=feed_id)
 
             if not data.get('content'):
@@ -145,6 +144,25 @@ class ReplyView(View):
         
         except Feed.DoesNotExist:
             return JsonResponse({'message': 'INVALID_FEED'}, status=400)
+    
+    # @authenticator
+    def delete(self, request):
+        try:
+            reply_id = request.GET.get('reply_id')
+            
+            reply = Reply.objects.get(id=reply_id, user_id=request.user.id)
+            feed  = reply.feed
+
+            if not reply.parent_id:
+                feed.reply_count -= 1
+                feed.save()
+
+            reply.delete()
+
+            return JsonResponse({'message': 'SUCCESS'}, status=200)
+
+        except Reply.DoesNotExist:
+            return JsonResponse({'message': 'INVALID_REPLY'}, status=400)
 
 class FeedLikeView(View):
     # @authenticator    
@@ -169,3 +187,27 @@ class FeedLikeView(View):
 
         except Feed.MultipleObjectsReturned:
             return JsonResponse({'message': 'INVALID FEED_ID'}, status=400)
+
+class ReplyLikeView(View):
+    # @authenticator
+    def post(self, request, reply_id):
+        try:
+            reply      = Reply.objects.get(id=reply_id)
+            reply_like = ReplyLike.objects.filter(user_id=request.user.id, reply_id=reply_id)
+
+            if reply_like:
+                reply_like.delete()
+                reply.like_count -= 1
+                reply.save()
+            else:
+                ReplyLike.objects.create(user_id=request.user.id, reply_id=reply_id)
+                reply.like_count += 1
+                reply.save()
+
+            return JsonResponse({'message': 'SUCCESS'}, status=201)
+        
+        except json.JSONDecodeError:    
+            return JsonResponse({'message': 'JSON_DECODE_ERROR'}, status=400)
+        
+        except Reply.DoesNotExist:
+            return JsonResponse({'message': 'INVALID REPLY_ID'}, status=400)
