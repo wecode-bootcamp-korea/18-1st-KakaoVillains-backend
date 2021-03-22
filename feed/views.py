@@ -8,7 +8,7 @@ from django.core      import exceptions
 from feed.models    import Feed, FeedImage, Reply, FeedLike, ReplyLike
 from account.models import User
 from product.models import Product, ProductImage
-# from utils.decorators import authenticator
+
 
 
 class FeedIndexView(View):
@@ -121,7 +121,7 @@ class FeedView(View):
             return JsonResponse({'message': 'INVALID FEED_ID'}, status=400)
 
 class ReplyView(View):
-    # @authenticator
+    @authenticator
     def post(self, request):
         try:
             data      = json.loads(request.body)
@@ -146,7 +146,7 @@ class ReplyView(View):
         except Feed.DoesNotExist:
             return JsonResponse({'message': 'INVALID_FEED'}, status=400)
 
-    # @authenticator
+    @authenticator
     def delete(self, request):
         try:
             reply_id = request.GET.get('reply_id')
@@ -165,7 +165,7 @@ class ReplyView(View):
         except Reply.DoesNotExist:
             return JsonResponse({'message': 'INVALID_REPLY'}, status=400)
 
-    # @authenticator
+    @authenticator
     def patch(self, request):
         try:
             data     = json.loads(request.body)
@@ -188,7 +188,7 @@ class ReplyView(View):
 
 
 class FeedLikeView(View):
-    # @authenticator    
+    @authenticator    
     def post(self, request, feed_id):
         try:
             feed      = Feed.objects.get(id=feed_id)
