@@ -1,10 +1,12 @@
-import json
+import json, bcrypt, jwt
 from django.views    import View
 from django.http    import JsonResponse
 
 from.models           import Character, Category, SubCategory, Product, ProductImage, CharacterProduct, Review, ReviewLike
 from account.models   import User
 from utils.decorators import authenticator
+from my_settings      import SECRET_KEY
+
 
 
 class ProductDetail(View):
@@ -14,26 +16,46 @@ class ProductDetail(View):
         reviews        = Review.objects.filter(product_id=product_id)
         image_list     = []
         review_list    = []
-        
 
         for image_url in image_urls:
             image_list.append(image_url.image_url)
 
         for review in reviews:
+            token = request.headers.get('Authorization')
+            liked = False
+
+            if token is None:
+                pass
+            else:
+                decoded_token = jwt.decode(token, SECRET_KEY, algorithms='HS256')
+                user  = User.objects.get(pk=decoded_token['user_id'])
+                if ReviewLike.objects.filter(user=user, review=review).exists():
+                    liked = True
+
             result_review = {
                 'id'         : review.pk,
                 'reviewer'   : review.user.username,
                 'rating'     : review.rating,
                 'created_at' : review.created_at.date(),
                 'content'    : review.content,
-                'like_count' : review.like_count
+                'like_count' : review.like_count,
+                'liked'      : liked
             }
+            
             review_list.append(result_review)
-        
+
+            rating_value = float(product.average_rating)
+            if rating_value % 1 < 0.3:
+                rating_value = rating_value - (rating_value % 1)
+            elif rating_value % 1 < 0.8:
+                rating_value = rating_value - (rating_value % 1) + 0.5
+            elif rating_value % 1 < 0.1:
+                rating_value = rating_value - (rating_value % 1) + 1
+
         results = [{
             'name'           : product.name,
             'price'          : product.price,
-            'average_rating' : product.average_rating,
+            'average_rating' : rating_value,
             'description'    : product.description,
             'review_count'   : product.review_count,
             'image_list'     : image_list,
@@ -82,37 +104,39 @@ class ReviewLikeManage(View):
             Review.objects.filter(pk=review.id).update(like_count=count+1)
             return JsonResponse({'result': 'liked'}, status=201)
 
-class CategoryManage(View):
-    def get(self, request):
-        product        = Product.objects.get(pk=product_id)
-        image_urls     = ProductImage.objects.filter(product_id=product_id)
-        reviews        = Review.objects.filter(product_id=product_id)
-        image_list     = []
-        review_list    = []
+# class CategoryManage(View):
+#     def get(self, request):
+#         pass
+
+#         product        = Product.objects.get(pk=product_id)
+#         image_urls     = ProductImage.objects.filter(product_id=product_id)
+#         reviews        = Review.objects.filter(product_id=product_id)
+#         image_list     = []
+#         review_list    = []
         
 
-        for image_url in image_urls:
-            image_list.append(image_url.image_url)
+#         for image_url in image_urls:
+#             image_list.append(image_url.image_url)
 
-        for review in reviews:
-            result_review = {
-                'id'         : review.pk,
-                'reviewer'   : review.user.username,
-                'rating'     : review.rating,
-                'created_at' : review.created_at.date(),
-                'content'    : review.content,
-                'like_count' : review.like_count
-            }
-            review_list.append(result_review)
+#         for review in reviews:
+#             result_review = {
+#                 'id'         : review.pk,
+#                 'reviewer'   : review.user.username,
+#                 'rating'     : review.rating,
+#                 'created_at' : review.created_at.date(),
+#                 'content'    : review.content,
+#                 'like_count' : review.like_count
+#             }
+#             review_list.append(result_review)
         
-        results = [{
-            'name'           : product.name,
-            'price'          : product.price,
-            'average_rating' : product.average_rating,
-            'description'    : product.description,
-            'review_count'   : product.review_count,
-            'image_list'     : image_list,
-            'review_list'    : review_list
-        }]
+#         results = [{
+#             'name'           : product.name,
+#             'price'          : product.price,
+#             'average_rating' : product.average_rating,
+#             'description'    : product.description,
+#             'review_count'   : product.review_count,
+#             'image_list'     : image_list,
+#             'review_list'    : review_list
+#         }]
 
-        return JsonResponse({'result': results}, status=200)
+#         return JsonResponse({'result': results}, status=200)
