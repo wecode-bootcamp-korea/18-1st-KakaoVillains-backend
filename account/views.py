@@ -13,9 +13,9 @@ class UserSignupView(View):
     def post(self, request):
         try:
             data     = json.loads(request.body)
-            email    = data.get('email')
-            password = data.get('password')
-            username = data.get('username')
+            email    = data['email']
+            password = data['password']
+            username = data['username']
 
             if ('@' or '.') not in email:
                 return JsonResponse({"message":"email must contain the '@' symbol and the period'.'"}, status=400)
@@ -47,13 +47,9 @@ class UserSigninView(View):
     def post(self, request):
         try:
             data     = json.loads(request.body)
-            email    = data.get('email')
-            password = data.get('password')
-            username = data.get('username')
+            email    = data['email']
+            password = data['password']
             user     = User.objects.get(email=email)
-
-            if email is None:
-                return JsonResponse({"message":"KEY_ERROR"}, status=401)
            
             if bcrypt.checkpw(password.encode('utf-8'), user.password.encode('utf-8')):
                 token = jwt.encode({'user_id':user.pk}, SECRET_KEY, algorithm = 'HS256')
