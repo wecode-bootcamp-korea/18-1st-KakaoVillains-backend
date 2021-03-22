@@ -77,7 +77,7 @@ class FeedView(View):
                 if not reply.parent_id:
                     reply_dict = {
                         'id'             : reply.id,
-                        'reply'          : reply.content,
+                        'reply_content'  : reply.content,
                         'reply_username' : reply.user.username,
                         'like_count'     : reply.like_count,
                         'datetime'       : reply.created_at.strftime('%Y-%m-%d')
@@ -87,7 +87,7 @@ class FeedView(View):
                 if reply.parent_id:
                     reply_of_reply_dict = {
                         'id'             : reply.id,
-                        'reply'          : reply.content,
+                        'reply_content'  : reply.content,
                         'reply_username' : reply.user.username,
                         'like_count'     : reply.like_count,
                         'reply_id'       : reply.parent_id,
