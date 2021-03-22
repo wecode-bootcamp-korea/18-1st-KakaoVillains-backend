@@ -12,10 +12,11 @@ from product.models import Product, ProductImage
 
 
 class FeedIndexView(View):
-    def get(self, request):
-        feeds       = Feed.objects.all().order_by('-created_at')
-        feed_images = FeedImage.objects.all()
-
+    def get(self, request, page):
+        feed_start  = 4 * page
+        feed_end    = feed_start + 4
+        feeds       = Feed.objects.all().order_by('-created_at')[feed_start:feed_end]
+        
         result = []
         for feed in feeds:
             image_urls         = FeedImage.objects.filter(feed_id=feed.id)
@@ -144,7 +145,7 @@ class ReplyView(View):
         
         except Feed.DoesNotExist:
             return JsonResponse({'message': 'INVALID_FEED'}, status=400)
-    
+
     # @authenticator
     def delete(self, request):
         try:
@@ -159,11 +160,11 @@ class ReplyView(View):
 
             reply.delete()
 
-            return JsonResponse({'message': 'SUCCESS'}, status=200)
+            return JsonResponse({'message': 'SUCCESS'}, status=204)
 
         except Reply.DoesNotExist:
             return JsonResponse({'message': 'INVALID_REPLY'}, status=400)
-    
+
     # @authenticator
     def patch(self, request):
         try:
@@ -178,13 +179,13 @@ class ReplyView(View):
             reply.save()
 
             return JsonResponse({'message': 'SUCCESS'}, status=200)
-        
+
         except json.JSONDecodeError:    
             return JsonResponse({'message': 'JSON_DECODE_ERROR'}, status=400)
 
         except Reply.DoesNotExist:
             return JsonResponse({'message': 'INVALID_REPLY'}, status=400)
-        
+
 
 class FeedLikeView(View):
     # @authenticator    
@@ -203,7 +204,7 @@ class FeedLikeView(View):
                 feed.save()
 
             return JsonResponse({'message': 'SUCCESS'}, status=201)
-        
+
         except Feed.DoesNotExist:
             return JsonResponse({'message': 'INVALID FEED_ID'}, status=400)
 
@@ -227,9 +228,9 @@ class ReplyLikeView(View):
                 reply.save()
 
             return JsonResponse({'message': 'SUCCESS'}, status=201)
-        
+
         except json.JSONDecodeError:    
             return JsonResponse({'message': 'JSON_DECODE_ERROR'}, status=400)
-        
+
         except Reply.DoesNotExist:
             return JsonResponse({'message': 'INVALID REPLY_ID'}, status=400)
