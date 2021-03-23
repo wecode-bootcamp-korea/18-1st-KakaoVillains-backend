@@ -54,15 +54,29 @@ class ProductDetail(View):
                 rating_value = rating_value - (rating_value % 1) + 0.5
             elif rating_value % 1 < 0.1:
                 rating_value = rating_value - (rating_value % 1) + 1
+            
+            sub_category_relatives        = Product.objects.filter(sub_category=product.sub_category)
+            character                     = product.character_set.first()
+            character_relatives           = character.products.all()
+            sub_category_related_products = [{"image_url":ProductImage.objects.filter(product=related_product).first().image_url, "name":related_product.name, "price":related_product.price, "discount_rate":related_product.discount_rate} for related_product in sub_category_relatives]
+            character_related_products    = [{"image_url":ProductImage.objects.filter(product=related_product).first().image_url, "name":related_product.name, "price":related_product.price, "discount_rate":related_product.discount_rate} for related_product in character_relatives]
+            temp                          = sub_category_related_products + character_related_products
+            related_products              = []
+
+            for related_product in temp:
+                if related_product not in related_products:
+                    related_products.append(related_product)
+
 
             results = [{
-                'name'           : product.name,
-                'price'          : round(product.price),
-                'average_rating' : rating_value,
-                'description'    : product.description,
-                'review_count'   : product.review_count,
-                'image_list'     : image_list,
-                'review_list'    : review_list
+                'name'             : product.name,
+                'price'            : round(product.price),
+                'average_rating'   : rating_value,
+                'description'      : product.description,
+                'review_count'     : product.review_count,
+                'image_list'       : image_list,
+                'review_list'      : review_list,
+                'related_products' : related_products
             }]
 
             return JsonResponse({'result': results}, status=200)
