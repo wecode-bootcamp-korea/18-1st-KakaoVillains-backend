@@ -222,9 +222,9 @@ class CategoryManage(View):
                     product_list  = []
                     products = Product.objects.all().order_by('-created_at')
                     result = {
-                        "character_name"    : "전체",
-                        "character_id"      : "0",
-                        "product" : generator(products)
+                        "character_name" : "전체",
+                        "character_id"   : "0",
+                        "product"        : generator(products)
                     }
                     return JsonResponse({'result': result}, status=200)
                 
@@ -232,9 +232,9 @@ class CategoryManage(View):
                     product_list  = []
                     products = Product.objects.all().order_by('price')
                     result = {
-                        "character_name"    : "전체",
-                        "character_id"      : "0",
-                        "product" : generator(products)
+                        "character_name" : "전체",
+                        "character_id"   : "0",
+                        "product"        : generator(products)
                     }
                     return JsonResponse({'result': result}, status=200)
 
@@ -242,36 +242,36 @@ class CategoryManage(View):
                     product_list  = []
                     products = Product.objects.all().order_by('-price')
                     result = {
-                        "character_name"    : "전체",
-                        "character_id"      : "0",
-                        "product" : generator(products)
+                        "character_name" : "전체",
+                        "character_id"   : "0",
+                        "product"        : generator(products)
                     }
                     return JsonResponse({'result': result}, status=200)
 
             if filter_type == "character":
                 result = {
-                    "character_name"    : Character.objects.get(pk=characterSeq).name,
-                    "character_id"      : Character.objects.get(pk=characterSeq).pk,
-                    "product" : generator(character_filter(characterSeq))
+                    "character_name" : Character.objects.get(pk=characterSeq).name,
+                    "character_id"   : Character.objects.get(pk=characterSeq).pk,
+                    "product"        : generator(character_filter(characterSeq))
                 }
                 return JsonResponse({'result': result}, status=200)
 
             if filter_type == "subject":
                 if subCategorySeq is None:
                     result = {
-                        "category_name"    : Category.objects.get(pk=categorySeq).name,
-                        "category_id"      : Category.objects.get(pk=categorySeq).pk,
+                        "category_name"     : Category.objects.get(pk=categorySeq).name,
+                        "category_id"       : Category.objects.get(pk=categorySeq).pk,
                         "sub_category_name" : [sub_category.name for sub_category in SubCategory.objects.filter(category=categorySeq)],
-                        "product" : generator(category_filter(categorySeq, characterSeq))
+                        "product"           : generator(category_filter(categorySeq, characterSeq))
                     }
                     return JsonResponse({'result': result}, status=200)
 
                 else:
                     result = {
-                        "category_name"    : SubCategory.objects.get(pk=subCategorySeq).category.name,
-                        "category_id"      : SubCategory.objects.get(pk=subCategorySeq).category.pk,
+                        "category_name"     : SubCategory.objects.get(pk=subCategorySeq).category.name,
+                        "category_id"       : SubCategory.objects.get(pk=subCategorySeq).category.pk,
                         "sub_category_name" : [sub_category.name for sub_category in SubCategory.objects.filter(category=SubCategory.objects.get(pk=subCategorySeq).category)],
-                        "product" : generator(sub_category_filter(subCategorySeq, characterSeq))
+                        "product"           : generator(sub_category_filter(subCategorySeq, characterSeq))
                     }
                     return JsonResponse({'result': result}, status=200)
               
