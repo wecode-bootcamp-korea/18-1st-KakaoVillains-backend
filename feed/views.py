@@ -12,54 +12,41 @@ from utils.decorators import authenticator
 
 
 class FeedIndexView(View):
-    def get(self, request, page):
-        feed_start  = 4 * page
-        feed_end    = feed_start + 4
-        feeds       = Feed.objects.all().order_by('-created_at')[feed_start:feed_end]
+    def get(self, request):
+        page    = int(request.GET.get('page'))
+        limit   = 4
+        offset  = limit * page
+        feeds   = Feed.objects.all().order_by('-created_at')[offset:offset+limit]
         
-        result = []
         for feed in feeds:
-            image_urls         = FeedImage.objects.filter(feed_id=feed.id)
-            image_url          = [element.image_url for element in image_urls]
-            user               = User.objects.get(id=feed.user_id)
-            reply              = Reply.objects.filter(feed_id=feed.id, parent_id=None).order_by('created_at').last()
-            recommend_products = Feed.objects.get(id=feed.id).products.all()
-            
-            if not reply:
-                reply_username = ''
-                reply_content  = ''
-            else:
-                reply_username = reply.user.username
-                reply_content  = reply.content            
+            reply          = feed.reply_set.filter(parent_id=None).order_by('-created_at').first()
+            reply_username = reply.user.username if reply else ''
+            reply_content  = reply.content if reply else ''
 
-            if not recommend_products:
-                recommend_product = []
-            else:
-                recommend_product = []
-                for product in recommend_products:
-                    product_dict = {
-                        'name'      : product.name,
-                        'price'     : product.price,
-                        'image_url' : product.productimage_set.first().image_url
-                    }
-                    recommend_product.append(product_dict)
+            recommend_products = [
+                {
+                    'name'      : product.name,
+                    'price'     : round(product.price),
+                    'image_url' : product.productimage_set.first().image_url
+                } for product in feed.products.all()
+            ]
 
-            my_dict = {
+        result = [
+            {
                 'id'                 : feed.id,
-                'username'           : user.username,
+                'username'           : feed.user.username,
                 'title'              : feed.title,
                 'content'            : feed.content,
-                'image_url'          : image_url,
-                'profile_picture'    : user.profile_picture_url,
+                'image_url'          : [element.image_url for element in feed.feedimage_set.all()],
+                'profile_picture'    : feed.user.profile_picture_url,
                 'like_count'         : feed.like_count,
                 'datetime'           : feed.created_at.strftime('%Y.%m.%d'),
                 'reply_count'        : feed.reply_count,
                 'reply_username'     : reply_username,
-                'reply'              : reply_content,
-                'recommend_products' : recommend_product,
-            }
-
-            result.append(my_dict)
+                'reply_content'      : reply_content,
+                'recommend_products' : recommend_products,
+            } for feed in feeds
+        ]
 
         return JsonResponse({'result' : result}, status=200)
 
@@ -67,50 +54,41 @@ class FeedView(View):
     def get(self, request, feed_id):
         try:
             feed        = Feed.objects.get(id=feed_id)
-            feed_images = FeedImage.objects.filter(feed_id=feed.id)
-            image_url   = [element.image_url for element in feed_images]
             replies     = feed.reply_set.all().order_by('-created_at')
 
-            reply_list = []
-            reply_of_reply_list = []
-            for reply in replies:
-                if not reply.parent_id:
-                    reply_dict = {
-                        'id'             : reply.id,
-                        'reply_content'  : reply.content,
-                        'reply_username' : reply.user.username,
-                        'like_count'     : reply.like_count,
-                        'datetime'       : reply.created_at.strftime('%Y-%m-%d')
-                    }
-                    reply_list.append(reply_dict)
-                
-                if reply.parent_id:
-                    reply_of_reply_dict = {
-                        'id'             : reply.id,
-                        'reply_content'  : reply.content,
-                        'reply_username' : reply.user.username,
-                        'like_count'     : reply.like_count,
-                        'reply_id'       : reply.parent_id,
-                        'datetime'       : reply.created_at.strftime('%Y-%m-%d')
-                    }
-                    reply_of_reply_list.append(reply_of_reply_dict)
+            recommend_products = [
+                {
+                    'name': product.name,
+                    'price': round(product.price),
+                    'image_url': product.productimage_set.first().image_url
+                } for product in feed.products.all()
+            ]
 
-            result = []
+            reply_list = [
+                {
+                    'id': reply.id,
+                    'reply_content': reply.content,
+                    'reply_username': reply.user.username,
+                    'like_count': reply.like_count,
+                    'reply_id': reply.parent_id,
+                    'datetime': reply.created_at.strftime('%Y-%m-%d')
+                } for reply in replies
+            ]
 
-            my_dict = {
-                'id'              : feed.id,
-                'username'        : feed.user.username,
-                'title'           : feed.title,
-                'content'         : feed.content,
-                'image_url'       : image_url,
-                'profile_picture' : feed.user.profile_picture_url,
-                'like_count'      : feed.like_count,
-                'reply_count'     : feed.reply_count,
-                'reply'           : reply_list,
-                'reply_of_reply'  : reply_of_reply_list
-
-            }
-            result.append(my_dict)
+            result = [
+                {
+                    'id'                : feed.id,
+                    'username'          : feed.user.username,
+                    'title'             : feed.title,
+                    'content'           : feed.content,
+                    'image_url'         : [element.image_url for element in feed.feedimage_set.all()],
+                    'profile_picture'   : feed.user.profile_picture_url,
+                    'like_count'        : feed.like_count,
+                    'reply_count'       : feed.reply_count,
+                    'recommend_products': recommend_products,
+                    'reply'             : reply_list
+                }
+            ]
 
             return JsonResponse({'result' : result}, status=200)
 

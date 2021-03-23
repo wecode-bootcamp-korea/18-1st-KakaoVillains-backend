@@ -4,7 +4,7 @@ from feed.views import FeedIndexView, FeedView, ReplyView, FeedLikeView, ReplyLi
 
 
 urlpatterns = [
-    path('/feeds/<int:page>', FeedIndexView.as_view()),
+    path('', FeedIndexView.as_view()),
     path('/<int:feed_id>', FeedView.as_view()),
     path('/reply', ReplyView.as_view()),
     path('/like/<int:feed_id>', FeedLikeView.as_view()),
