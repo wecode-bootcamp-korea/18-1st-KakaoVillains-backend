@@ -127,9 +127,7 @@ class ReplyView(View):
     @authenticator
     def delete(self, request):
         try:
-            reply_id = request.GET.get('reply_id')
-            
-            reply = Reply.objects.get(id=reply_id, user_id=request.user.id)
+            reply = Reply.objects.get(id=request.GET.get('reply_id'), user_id=request.user.id)
             feed  = reply.feed
 
             if not reply.parent_id:
@@ -147,8 +145,7 @@ class ReplyView(View):
     def patch(self, request):
         try:
             data     = json.loads(request.body)
-            reply_id = request.GET.get('reply_id')
-            reply    = Reply.objects.get(id=reply_id, user_id=request.user.id)
+            reply    = Reply.objects.get(id=request.GET.get('reply_id'), user_id=request.user.id)
             
             if not data.get('content'):
                 return JsonResponse({'message': 'Type content'}, status=400)
@@ -170,7 +167,7 @@ class FeedLikeView(View):
     def post(self, request, feed_id):
         try:
             feed      = Feed.objects.get(id=feed_id)
-            feed_like = FeedLike.objects.filter(feed_id=feed_id, user_id=request.user.id) 
+            feed_like = feed.feedlike_set.filter(feed_id=feed_id, user_id=request.user.id) 
 
             if feed_like:
                 feed_like.delete()
@@ -194,7 +191,7 @@ class ReplyLikeView(View):
     def post(self, request, reply_id):
         try:
             reply      = Reply.objects.get(id=reply_id)
-            reply_like = ReplyLike.objects.filter(user_id=request.user.id, reply_id=reply_id)
+            reply_like = reply.replylike_set.filter(user_id=request.user.id, reply_id=reply_id)
 
             if reply_like:
                 reply_like.delete()
