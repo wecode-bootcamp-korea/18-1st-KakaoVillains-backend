@@ -305,13 +305,57 @@ class CategoryManage(View):
 class SearchManage(View):
     def get(self, request):
         try:
-            keyword = request.GET.get('keyword', None)
+            keyword   = request.GET.get('keyword', None)
+            sort      = request.GET.get('sort', None)
+            character = request.GET.get('character', None)
             if keyword == "":
                 return JsonResponse({"message": "keyword is empty"}, status=404)
             else:
-                products = Product.objects.filter(name__contains=keyword)
-                result = []
-                result = [{"product_name" : product.name, "product_id" : product.pk} for product in products]
+                name_searched_products = Product.objects.filter(name__contains=keyword)
+                if sort is None:
+                    result = []
+                    result = [{"product_name" : product.name, "product_id" : product.pk} for product in name_searched_products]
+                else:
+                    categories_searched     = Category.objects.filter(name__contains=keyword)
+                    sub_categories_searched = SubCategory.objects.filter(name__contains=keyword)
+
+                    searched_products = []
+                    products          = []
+                    for sub_category in sub_categories_searched:
+                        sub_category_searched_products = sub_category.product_set.all()
+                        for product in sub_category_searched_products:
+                            searched_products.append(product)
+
+                    for category in categories_searched:
+                        sub_categories = SubCategory.objects.filter(category=category)
+                        for sub_category in sub_categories:
+                            category_searched_products = sub_category.product_set.all()
+                            for product in category_searched_products:
+                                searched_products.append(product)
+
+                    for product in name_searched_products:
+                        searched_products.append(product)
+                    
+                    for product in searched_products:
+                        if product not in products:
+                            products.append(product)
+
+                    if character:  
+                        temps = []     
+                        for product in products:
+                            if product.character_set.first().id == int(character):
+                                temps.append(product)
+                        products = temps
+
+                    if sort == "NEW":
+                        products.sort(key=lambda x: x.created_at, reverse=True)
+                    elif sort == "PRICE_ASC":
+                        products.sort(key=lambda x: x.price)
+                    elif sort == "PRICE_DESC":
+                        products.sort(key=lambda x: x.price, reverse=True)
+                    else:
+                        return JsonResponse({"message": "sort is not valid"}, status=400)
+                    result = [{"image_url":ProductImage.objects.filter(product=product).first().image_url, "product_name" : product.name, "product_id" : product.pk, "price":product.price, "discount_rate":product.discount_rate} for product in products]
                 return JsonResponse({'result': result}, status=200)
         
         except ValueError:
