@@ -187,10 +187,10 @@ class ReplyLikeView(View):
     def post(self, request, reply_id):
         try:
             reply      = Reply.objects.get(id=reply_id)
-            reply_like = reply.replylike_set.filter(user_id=request.user.id, reply_id=reply_id)
+            reply_like = reply.replylike_set.filter(user_id=request.user.id, reply_id=reply_id).exists()
 
             if reply_like:
-                reply_like.delete()
+                reply.replylike_set.get(user_id=request.user.id, reply_id=reply_id).delete()
                 reply.like_count -= 1
                 reply.save()
             else:
