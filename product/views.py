@@ -7,25 +7,25 @@ from json.decoder     import JSONDecodeError
 
 from.models           import Character, Category, SubCategory, Product, ProductImage, CharacterProduct, Review, ReviewLike
 from account.models   import User
-from utils.decorators import authenticator
+from utils.decorators import authenticator, indicator
 from my_settings      import SECRET_KEY
 
 
 
 class ProductDetail(View):
+    @indicator
     def get(self, request, product_id):
         try: 
             product        = Product.objects.get(pk=product_id)
-            image_urls     = ProductImage.objects.filter(product_id=product_id)
-            reviews        = Review.objects.filter(product_id=product_id)
+            image_urls     = product.productimage_set.all()
+            reviews        = product.review_set.all()
             image_list     = []
             review_list    = []
 
-            for image_url in image_urls:
-                image_list.append(image_url.image_url)
+            image_list = [image_url.image_url for image_url in image_urls]
 
             for review in reviews:
-                token = request.headers.get('Authorization')
+                user = request.headers.get('Authorization')
                 liked = False
 
                 if token is None:
@@ -58,8 +58,8 @@ class ProductDetail(View):
             sub_category_relatives        = Product.objects.filter(sub_category=product.sub_category)
             character                     = product.character_set.first()
             character_relatives           = character.products.all()
-            sub_category_related_products = [{"image_url":ProductImage.objects.filter(product=related_product).first().image_url, "name":related_product.name, "price":related_product.price, "discount_rate":related_product.discount_rate} for related_product in sub_category_relatives]
-            character_related_products    = [{"image_url":ProductImage.objects.filter(product=related_product).first().image_url, "name":related_product.name, "price":related_product.price, "discount_rate":related_product.discount_rate} for related_product in character_relatives]
+            sub_category_related_products = [{"image_url":ProductImage.objects.filter(product=related_product).first().image_url, "name":related_product.name, "price":round(related_product.price), "discount_rate":related_product.discount_rate} for related_product in sub_category_relatives]
+            character_related_products    = [{"image_url":ProductImage.objects.filter(product=related_product).first().image_url, "name":related_product.name, "price":round(related_product.price), "discount_rate":related_product.discount_rate} for related_product in character_relatives]
             temp                          = sub_category_related_products + character_related_products
             related_products              = []
 
