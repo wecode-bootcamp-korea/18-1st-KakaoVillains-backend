@@ -84,7 +84,8 @@ class FeedView(View):
                                                     'reply_username': reply.user.username,
                                                     'like_count'    : reply.like_count,
                                                     'reply_id'      : reply.parent_id,
-                                                    'datetime'      : reply.created_at.strftime('%Y-%m-%d')
+                                                    'datetime'      : reply.created_at.strftime('%Y-%m-%d'),
+                                                    'heart'         : request.user.replylike_set.filter(reply_id=reply.id).exists() if request.user else False
                                                 } for reply in replies
                                             ]
                 }
