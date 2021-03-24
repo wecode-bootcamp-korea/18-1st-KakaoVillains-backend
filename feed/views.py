@@ -75,7 +75,8 @@ class FeedView(View):
                 } for reply in replies
             ]
 
-            result = {
+            result = [ 
+                {
                     'id'                : feed.id,
                     'username'          : feed.user.username,
                     'title'             : feed.title,
@@ -86,8 +87,8 @@ class FeedView(View):
                     'reply_count'       : feed.reply_count,
                     'recommend_products': recommend_products,
                     'reply'             : reply_list
-            }
-            
+                }
+            ]
 
             return JsonResponse({'result' : result}, status=200)
 
