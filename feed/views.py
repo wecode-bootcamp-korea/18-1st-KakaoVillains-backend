@@ -177,6 +177,8 @@ class FeedLikeView(View):
                 feed.like_count += 1
                 feed.save()
 
+            # request.user.liked_feed.filter(feed_id=feed.id)
+
             return JsonResponse({'message': 'SUCCESS'}, status=201)
 
         except Feed.DoesNotExist:

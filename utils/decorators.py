@@ -32,8 +32,6 @@ def authenticator (func):
             return JsonResponse({"message": "Token not received"}, status=400)
 
     
-<<<<<<< HEAD
-=======
     return wrapper
     
 
@@ -62,5 +60,4 @@ def indicator (func):
             return JsonResponse({"message": "Token not received"}, status=400)
 
     
->>>>>>> master
     return wrapper
