@@ -13,10 +13,10 @@ from utils.decorators import authenticator
 
 class FeedIndexView(View):
     def get(self, request):
-        page    = int(request.GET.get('page'))
-        limit   = 4
-        offset  = limit * page
-        feeds   = Feed.objects.all().order_by('-created_at')[offset:offset+limit]
+        PAGE    = int(request.GET.get('page'))
+        LIMIT   = 4
+        OFFSET  = LIMIT * PAGE
+        feeds   = Feed.objects.all().order_by('-created_at')[OFFSET:OFFSET+LIMIT]
         
         for feed in feeds:
             reply          = feed.reply_set.filter(parent_id=None).order_by('-created_at').first()
@@ -75,8 +75,7 @@ class FeedView(View):
                 } for reply in replies
             ]
 
-            result = [
-                {
+            result = {
                     'id'                : feed.id,
                     'username'          : feed.user.username,
                     'title'             : feed.title,
@@ -87,8 +86,8 @@ class FeedView(View):
                     'reply_count'       : feed.reply_count,
                     'recommend_products': recommend_products,
                     'reply'             : reply_list
-                }
-            ]
+            }
+            
 
             return JsonResponse({'result' : result}, status=200)
 
@@ -167,7 +166,7 @@ class FeedLikeView(View):
     def post(self, request, feed_id):
         try:
             feed      = Feed.objects.get(id=feed_id)
-            feed_like = feed.feedlike_set.filter(feed_id=feed_id, user_id=request.user.id) 
+            feed_like = feed.feedlike_set.filter(feed_id=feed_id, user_id=request.user.id)
 
             if feed_like:
                 feed_like.delete()
