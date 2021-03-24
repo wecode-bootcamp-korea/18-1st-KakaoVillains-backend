@@ -177,9 +177,7 @@ class FeedLikeView(View):
                 feed.like_count += 1
                 feed.save()
 
-            # request.user.liked_feed.filter(feed_id=feed.id)
-
-            return JsonResponse({'message': 'SUCCESS'}, status=201)
+            return JsonResponse({'like_count': feed.like_count}, status=201)
 
         except Feed.DoesNotExist:
             return JsonResponse({'message': 'INVALID FEED_ID'}, status=400)
@@ -203,7 +201,7 @@ class ReplyLikeView(View):
                 reply.like_count += 1
                 reply.save()
 
-            return JsonResponse({'message': 'SUCCESS'}, status=201)
+            return JsonResponse({'like_count': reply.like_count}, status=201)
 
         except json.JSONDecodeError:    
             return JsonResponse({'message': 'JSON_DECODE_ERROR'}, status=400)
