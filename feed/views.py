@@ -8,10 +8,11 @@ from django.core      import exceptions
 from feed.models      import Feed, FeedImage, Reply, FeedLike, ReplyLike
 from account.models   import User
 from product.models   import Product, ProductImage
-from utils.decorators import authenticator
+from utils.decorators import authenticator, indicator
 
 
 class FeedIndexView(View):
+    @indicator
     def get(self, request):
         PAGE    = int(request.GET.get('page'))
         LIMIT   = 4
@@ -33,6 +34,7 @@ class FeedIndexView(View):
                 'profile_picture'    : feed.user.profile_picture_url,
                 'like_count'         : feed.like_count,
                 'datetime'           : feed.created_at.strftime('%Y.%m.%d'),
+                'heart'              : request.user.feedlike_set.filter(feed_id=feed.id).exists() if request.user else False,
                 'reply_count'        : feed.reply_count,
                 'reply_username'     : reply_username,
                 'reply_content'      : reply_content,
@@ -46,7 +48,7 @@ class FeedIndexView(View):
                                         ]
             } 
             result.append(feed_dict)
-
+        
         return JsonResponse({'result' : result}, status=200)
 
 class FeedView(View):
@@ -95,7 +97,7 @@ class FeedView(View):
             return JsonResponse({'message': 'INVALID FEED_ID'}, status=400)
 
 class ReplyView(View):
-    @authenticator
+    # @authenticator
     def post(self, request):
         try:
             data      = json.loads(request.body)
@@ -120,10 +122,10 @@ class ReplyView(View):
         except Feed.DoesNotExist:
             return JsonResponse({'message': 'INVALID_FEED'}, status=400)
 
-    @authenticator
+    # @authenticator
     def delete(self, request):
         try:
-            reply = Reply.objects.get(id=request.GET.get('reply_id'), user_id=request.user.id)
+            reply = Reply.objects.get(id=request.GET.get('reply_id'), user_id=1)
             feed  = reply.feed
 
             if not reply.parent_id:
@@ -159,18 +161,18 @@ class ReplyView(View):
 
 
 class FeedLikeView(View):
-    @authenticator    
+    # @authenticator    
     def post(self, request, feed_id):
         try:
             feed      = Feed.objects.get(id=feed_id)
-            feed_like = feed.feedlike_set.filter(feed_id=feed_id, user_id=request.user.id).exists()
+            feed_like = feed.feedlike_set.filter(feed_id=feed_id, user_id=1).exists()
 
             if feed_like:
-                feed.feedlike_set.get(feed_id=feed_id, user_id=request.user.id).delete()
+                feed.feedlike_set.get(feed_id=feed_id, user_id=1).delete()
                 feed.like_count -= 1
                 feed.save()
             else:
-                FeedLike.objects.create(feed_id=feed.id, user_id=request.user.id)
+                FeedLike.objects.create(feed_id=feed.id, user_id=1)
                 feed.like_count += 1
                 feed.save()
 
