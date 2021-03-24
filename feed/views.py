@@ -52,8 +52,8 @@ class FeedIndexView(View):
 class FeedView(View):
     def get(self, request, feed_id):
         try:
-            feed        = Feed.objects.get(id=feed_id)
-            replies     = feed.reply_set.all().order_by('-created_at')
+            feed    = Feed.objects.get(id=feed_id)
+            replies = feed.reply_set.all().order_by('-created_at')
 
             result = [ 
                 {
@@ -75,12 +75,12 @@ class FeedView(View):
                                             ],
                     'reply'             : [
                                                 {
-                                                    'id': reply.id,
-                                                    'reply_content': reply.content,
+                                                    'id'            : reply.id,
+                                                    'reply_content' : reply.content,
                                                     'reply_username': reply.user.username,
-                                                    'like_count': reply.like_count,
-                                                    'reply_id': reply.parent_id,
-                                                    'datetime': reply.created_at.strftime('%Y-%m-%d')
+                                                    'like_count'    : reply.like_count,
+                                                    'reply_id'      : reply.parent_id,
+                                                    'datetime'      : reply.created_at.strftime('%Y-%m-%d')
                                                 } for reply in replies
                                             ]
                 }
@@ -95,7 +95,7 @@ class FeedView(View):
             return JsonResponse({'message': 'INVALID FEED_ID'}, status=400)
 
 class ReplyView(View):
-    # @authenticator
+    @authenticator
     def post(self, request):
         try:
             data      = json.loads(request.body)
@@ -163,10 +163,10 @@ class FeedLikeView(View):
     def post(self, request, feed_id):
         try:
             feed      = Feed.objects.get(id=feed_id)
-            feed_like = feed.feedlike_set.filter(feed_id=feed_id, user_id=request.user.id)
+            feed_like = feed.feedlike_set.filter(feed_id=feed_id, user_id=request.user.id).exists()
 
             if feed_like:
-                feed_like.delete()
+                feed.feedlike_set.get(feed_id=feed_id, user_id=request.user.id).delete()
                 feed.like_count -= 1
                 feed.save()
             else:
