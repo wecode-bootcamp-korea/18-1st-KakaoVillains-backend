@@ -42,15 +42,11 @@ def indicator (func):
             token = request.headers.get('Authorization')
 
             if not token:
-<<<<<<< HEAD
-                request.user.id = None
-=======
-                request.user = None
->>>>>>> master
+                request.user.id = ''
                 return func(self, request, *arg, **karg)
                 
             decoded_token = jwt.decode(token, SECRET_KEY, algorithms='HS256')
-            request.user  = User.objects.get(pk=decoded_token['user_id'])
+            request.user.id  = User.objects.get(pk=decoded_token['user_id']).id
 
             return func(self, request, *arg, **karg)
         
