@@ -19,7 +19,6 @@ class ProductDetail(View):
             product        = Product.objects.get(pk=product_id)
             image_urls     = product.productimage_set.all()
             reviews        = product.review_set.all()
-            image_list     = []
             review_list    = []
 
             image_list = [image_url.image_url for image_url in image_urls]
@@ -52,20 +51,20 @@ class ProductDetail(View):
             character_relatives           = character.products.all()
             sub_category_related_products = [{
                 "image_url"     : ProductImage.objects.filter(product=related_product).first().image_url,
+                "id"            : related_product.pk,
                 "name"          : related_product.name,
                 "price"         : round(related_product.price),
                 "discount_rate" : related_product.discount_rate
-            }for related_product in sub_category_relatives]
+            }for related_product in sub_category_relatives if related_product != product]
             character_related_products    = [{
                 "image_url"     : ProductImage.objects.filter(product=related_product).first().image_url,
+                "id"            : related_product.pk,
                 "name"          : related_product.name,
                 "price"         : round(related_product.price),
                 "discount_rate" : related_product.discount_rate
-            } for related_product in character_relatives]
+            } for related_product in character_relatives if related_product != product]
             temp                          = sub_category_related_products + character_related_products
             related_products              = []
-
-            # related_products = [related_product for related_product in temp if related_product not in related_products]
 
             for related_product in temp:
                 if related_product not in related_products:
@@ -107,12 +106,6 @@ class ReviewManage(View):
             product.review_count   = review_count + 1
             product.save()
 
-
-            # Product.objects.filter(pk=product.id).update(
-            #     average_rating = (average_rating * review_count + rating) / (review_count + 1),
-            #     review_count   = review_count + 1
-            # )
-
             return JsonResponse({'result': 'Review Created'}, status=201)
         except TypeError:
             return JsonResponse({"message":"Type_Error"}, status=400)
@@ -152,6 +145,7 @@ class CategoryManage(View):
             subCategorySeq = request.GET.get('subCategorySeq', None)
             characterSeq = request.GET.get('characterSeq', None)
             sort = request.GET.get('sort', None)
+            
             if sort not in ["createDatetime,desc", "salePrice,asc", "salePrice,desc"]:
                 return JsonResponse({"message":"sort is not valid"}, status=400)
 
@@ -198,7 +192,7 @@ class CategoryManage(View):
                         products = sub_category.product_set.all()
                         for product in products:
                             product_list.append(product)
-                        # product_list = [product for product in products]         # sub_category 값 하나만 들어오는데 왜인지 모르겠어요
+
                     if sort == "createDatetime,desc":
                         product_list.sort(key=lambda x: x.created_at, reverse=True)
                     elif sort == "salePrice,asc":
@@ -215,7 +209,7 @@ class CategoryManage(View):
                         for product in products:
                             if product in character_products:
                                 product_list.append(product)
-                        # product_list = [products for product in products if product in character_products]  # 안되는데 왜인지 모르겠어요
+
                     if sort == "createDatetime,desc":
                         product_list.sort(key=lambda x: x.created_at, reverse=True)
                     elif sort == "salePrice,asc":
@@ -287,7 +281,7 @@ class CategoryManage(View):
                     result = {
                         "category_name"     : Category.objects.get(pk=categorySeq).name,
                         "category_id"       : Category.objects.get(pk=categorySeq).pk,
-                        "sub_category_name" : [sub_category.name for sub_category in SubCategory.objects.filter(category=categorySeq)],
+                        "sub_categories" : [{"name":sub_category.name, "id":sub_category.pk} for sub_category in SubCategory.objects.filter(category=categorySeq)],
                         "product"           : generator(category_filter(categorySeq, characterSeq))
                     }
                     return JsonResponse({'result': result}, status=200)
@@ -296,7 +290,7 @@ class CategoryManage(View):
                     result = {
                         "category_name"     : SubCategory.objects.get(pk=subCategorySeq).category.name,
                         "category_id"       : SubCategory.objects.get(pk=subCategorySeq).category.pk,
-                        "sub_category_name" : [sub_category.name for sub_category in SubCategory.objects.filter(category=SubCategory.objects.get(pk=subCategorySeq).category)],
+                        "sub_categories" : [{"name":sub_category.name, "id":sub_category.pk} for sub_category in SubCategory.objects.filter(category=SubCategory.objects.get(pk=subCategorySeq).category)],
                         "product"           : generator(sub_category_filter(subCategorySeq, characterSeq))
                     }
                     return JsonResponse({'result': result}, status=200)
