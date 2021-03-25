@@ -32,6 +32,7 @@ class UserSignupView(View):
 
             hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
             User.objects.create(username=username, email=email, password=hashed_password.decode('utf-8'))
+
             return JsonResponse({'result': 'SUCCESS'}, status=201)
 
         except KeyError:
@@ -71,4 +72,3 @@ class UserSigninView(View):
         
         except User.MultipleObjectsReturned:
             return JsonResponse({"message": "Multiple objects returned"}, status=401)
-
