@@ -25,7 +25,7 @@ class FeedIndexView(View):
 
         
         if OFFSET > Feed.objects.all().count():
-            return JsonResponse({'message': 'INVALID FEED'}, status=400)
+            return JsonResponse({'message': 'SUCCSESS'}, status=200)
 
         feeds = Feed.objects.all().order_by('-created_at')[OFFSET:LIMIT]
         
@@ -131,7 +131,7 @@ class ReplyView(View):
     @authenticator
     def delete(self, request):
         try:
-            reply = Reply.objects.get(id=request.GET.get('reply_id'), user_id=request.user.id)
+            reply = Reply.objects.get(id=request.GET.get('reply_id'), user_id=request.user)
             feed  = reply.feed
 
             if not reply.parent_id:
@@ -165,7 +165,6 @@ class ReplyView(View):
         except Reply.DoesNotExist:
             return JsonResponse({'message': 'INVALID_REPLY'}, status=400)
 
-
 class FeedLikeView(View):
     @authenticator    
     def post(self, request, feed_id):
@@ -182,7 +181,12 @@ class FeedLikeView(View):
                 feed.like_count += 1
                 feed.save()
 
-            return JsonResponse({'like_count': feed.like_count}, status=201)
+            result = {
+                'like_count' : feed.like_count,
+                'heart'      : feed.feedlike_set.filter(feed_id=feed.id, user_id=request.user.id).exists()
+            }
+
+            return JsonResponse({'result': result}, status=201)
 
         except Feed.DoesNotExist:
             return JsonResponse({'message': 'INVALID FEED_ID'}, status=400)
