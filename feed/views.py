@@ -18,43 +18,43 @@ def reply(feed_id):
 class FeedIndexView(View):
     @indicator
     def get(self, request):
-        PAGE   = int(request.GET.get('page'))
-        ITEM   = 4
-        OFFSET = ITEM * PAGE
-        LIMIT  = OFFSET + ITEM
+        try:
+            PAGE   = int(request.GET.get('page'))
+            ITEM   = 4
+            OFFSET = ITEM * PAGE
+            LIMIT  = OFFSET + ITEM
 
+            feeds = Feed.objects.all().order_by('-created_at')[OFFSET:LIMIT]
+            
+            result = [
+                {
+                    'id'                 : feed.id,
+                    'username'           : feed.user.username,
+                    'title'              : feed.title,
+                    'content'            : feed.content,
+                    'image_url'          : [element.image_url for element in feed.feedimage_set.all()],
+                    'profile_picture'    : feed.user.profile_picture_url,
+                    'like_count'         : feed.like_count,
+                    'datetime'           : feed.created_at.strftime('%Y.%m.%d'),
+                    'heart'              : request.user.feedlike_set.filter(feed_id=feed.id).exists() if request.user else False,
+                    'reply_count'        : feed.reply_count,
+                    'reply_username'     : reply(feed.id).user.username if reply(feed.id) else '',
+                    'reply_content'      : reply(feed.id).content if reply(feed.id) else '',
+                    'recommend_products' : [
+                                                {
+                                                    'id'        : product.id,
+                                                    'name'      : product.name,
+                                                    'price'     : round(product.price),
+                                                    'image_url' : product.productimage_set.first().image_url
+                                                } for product in feed.products.all()
+                                            ]
+                } for feed in feeds
+            ]
+
+            return JsonResponse({'result' : result}, status=200)
         
-        if OFFSET > Feed.objects.all().count():
-            return JsonResponse({'message': 'SUCCSESS'}, status=200)
-
-        feeds = Feed.objects.all().order_by('-created_at')[OFFSET:LIMIT]
-        
-        result = [
-            {
-                'id'                 : feed.id,
-                'username'           : feed.user.username,
-                'title'              : feed.title,
-                'content'            : feed.content,
-                'image_url'          : [element.image_url for element in feed.feedimage_set.all()],
-                'profile_picture'    : feed.user.profile_picture_url,
-                'like_count'         : feed.like_count,
-                'datetime'           : feed.created_at.strftime('%Y.%m.%d'),
-                'heart'              : request.user.feedlike_set.filter(feed_id=feed.id).exists() if request.user else False,
-                'reply_count'        : feed.reply_count,
-                'reply_username'     : reply(feed.id).user.username if reply(feed.id) else '',
-                'reply_content'      : reply(feed.id).content if reply(feed.id) else '',
-                'recommend_products' : [
-                                            {
-                                                'id'        : product.id,
-                                                'name'      : product.name,
-                                                'price'     : round(product.price),
-                                                'image_url' : product.productimage_set.first().image_url
-                                            } for product in feed.products.all()
-                                        ]
-            } for feed in feeds
-        ]
-
-        return JsonResponse({'result' : result}, status=200)
+        except IndexError:
+            return JsonResponse({'message': 'list out of index'}, status=400)
 
 class FeedView(View):
     @indicator
