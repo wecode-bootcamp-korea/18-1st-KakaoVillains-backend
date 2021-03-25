@@ -72,7 +72,7 @@ class ProductDetail(View):
                     related_products.append(related_product)
 
 
-            results = [{
+            results = {
                 'name'             : product.name,
                 'price'            : round(product.price),
                 'average_rating'   : rating_value,
@@ -81,7 +81,7 @@ class ProductDetail(View):
                 'image_list'       : image_list,
                 'review_list'      : review_list,
                 'related_products' : related_products
-            }]
+            }
 
             return JsonResponse({'result': results}, status=200)
         except Product.DoesNotExist:
@@ -246,6 +246,7 @@ class CategoryManage(View):
                     products = Product.objects.all().order_by('-created_at')
                     result = {
                         "character_name" : "전체",
+                        "sub_category_name" : [],
                         "character_id"   : "0",
                         "product"        : generator(products)
                     }
@@ -256,6 +257,7 @@ class CategoryManage(View):
                     products = Product.objects.all().order_by('price')
                     result = {
                         "character_name" : "전체",
+                        "sub_category_name" : [],
                         "character_id"   : "0",
                         "product"        : generator(products)
                     }
@@ -266,6 +268,7 @@ class CategoryManage(View):
                     products = Product.objects.all().order_by('-price')
                     result = {
                         "character_name" : "전체",
+                        "sub_category_name" : [],
                         "character_id"   : "0",
                         "product"        : generator(products)
                     }
