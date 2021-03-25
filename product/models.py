@@ -10,7 +10,7 @@ class Character(models.Model):
         db_table = 'characters'
 
 class Category(models.Model):
-    name = models.CharField(max_length=45, unique=True)
+    name    = models.CharField(max_length=45, unique=True)
 
     class Meta:
         db_table = 'categories'
@@ -32,6 +32,8 @@ class Product(models.Model):
     updated_at     = models.DateTimeField(auto_now=True)
     description    = models.TextField(null=True)
     created_at     = models.DateTimeField(auto_now_add=True)
+    sell_count     = models.IntegerField(default=0)
+    category       = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True)
     
     class Meta:
         db_table = 'products'
