@@ -11,21 +11,26 @@ from product.models   import Product, ProductImage
 from utils.decorators import authenticator, indicator
 
 
+def reply(feed_id):
+    reply = Feed.objects.get(id=feed_id).reply_set.filter(parent_id=None).order_by('-created_at').first()
+    return reply
+
 class FeedIndexView(View):
     @indicator
     def get(self, request):
-        PAGE    = int(request.GET.get('page'))
-        LIMIT   = 4
-        OFFSET  = LIMIT * PAGE
-        feeds   = Feed.objects.all().order_by('-created_at')[OFFSET:OFFSET+LIMIT]
-    
-        result = []
-        for feed in feeds:
-            reply          = feed.reply_set.filter(parent_id=None).order_by('-created_at').first()
-            reply_username = reply.user.username if reply else ''
-            reply_content  = reply.content if reply else ''
+        PAGE   = int(request.GET.get('page'))
+        ITEM   = 4
+        OFFSET = ITEM * PAGE
+        LIMIT  = OFFSET + ITEM
 
-            feed_dict = {
+        
+        if OFFSET > Feed.objects.all().count():
+            return JsonResponse({'message': 'INVALID FEED'}, status=400)
+
+        feeds = Feed.objects.all().order_by('-created_at')[OFFSET:LIMIT]
+        
+        result = [
+            {
                 'id'                 : feed.id,
                 'username'           : feed.user.username,
                 'title'              : feed.title,
@@ -36,8 +41,8 @@ class FeedIndexView(View):
                 'datetime'           : feed.created_at.strftime('%Y.%m.%d'),
                 'heart'              : request.user.feedlike_set.filter(feed_id=feed.id).exists() if request.user else False,
                 'reply_count'        : feed.reply_count,
-                'reply_username'     : reply_username,
-                'reply_content'      : reply_content,
+                'reply_username'     : reply(feed.id).user.username if reply(feed.id) else '',
+                'reply_content'      : reply(feed.id).content if reply(feed.id) else '',
                 'recommend_products' : [
                                             {
                                                 'id'        : product.id,
@@ -46,9 +51,9 @@ class FeedIndexView(View):
                                                 'image_url' : product.productimage_set.first().image_url
                                             } for product in feed.products.all()
                                         ]
-            } 
-            result.append(feed_dict)
-        
+            } for feed in feeds
+        ]
+
         return JsonResponse({'result' : result}, status=200)
 
 class FeedView(View):
@@ -58,38 +63,36 @@ class FeedView(View):
             feed    = Feed.objects.get(id=feed_id)
             replies = feed.reply_set.all().order_by('-created_at')
 
-            result = [ 
-                {
-                    'id'                : feed.id,
-                    'username'          : feed.user.username,
-                    'title'             : feed.title,
-                    'content'           : feed.content,
-                    'image_url'         : [element.image_url for element in feed.feedimage_set.all()],
-                    'profile_picture'   : feed.user.profile_picture_url,
-                    'heart'             : request.user.feedlike_set.filter(feed_id=feed.id).exists() if request.user else False,
-                    'like_count'        : feed.like_count,
-                    'reply_count'       : feed.reply_count,
-                    'recommend_products': [
-                                                {
-                                                    'id'       : product.id,
-                                                    'name'     : product.name,
-                                                    'price'    : round(product.price),
-                                                    'image_url': product.productimage_set.first().image_url
-                                                } for product in feed.products.all()
-                                            ],
-                    'reply'             : [
-                                                {
-                                                    'id'            : reply.id,
-                                                    'reply_content' : reply.content,
-                                                    'reply_username': reply.user.username,
-                                                    'like_count'    : reply.like_count,
-                                                    'reply_id'      : reply.parent_id,
-                                                    'datetime'      : reply.created_at.strftime('%Y-%m-%d'),
-                                                    'heart'         : request.user.replylike_set.filter(reply_id=reply.id).exists() if request.user else False
-                                                } for reply in replies
-                                            ]
-                }
-            ]
+            result = {
+                'id'                : feed.id,
+                'username'          : feed.user.username,
+                'title'             : feed.title,
+                'content'           : feed.content,
+                'image_url'         : [element.image_url for element in feed.feedimage_set.all()],
+                'profile_picture'   : feed.user.profile_picture_url,
+                'heart'             : request.user.feedlike_set.filter(feed_id=feed.id).exists() if request.user else False,
+                'like_count'        : feed.like_count,
+                'reply_count'       : feed.reply_count,
+                'recommend_products': [
+                                            {
+                                                'id'       : product.id,
+                                                'name'     : product.name,
+                                                'price'    : round(product.price),
+                                                'image_url': product.productimage_set.first().image_url
+                                            } for product in feed.products.all()
+                                        ],
+                'reply'             : [
+                                            {
+                                                'id'            : reply.id,
+                                                'reply_content' : reply.content,
+                                                'reply_username': reply.user.username,
+                                                'like_count'    : reply.like_count,
+                                                'reply_id'      : reply.parent_id,
+                                                'datetime'      : reply.created_at.strftime('%Y-%m-%d'),
+                                                'heart'         : request.user.replylike_set.filter(reply_id=reply.id).exists() if request.user else False
+                                            } for reply in replies
+                                        ]
+            }
 
             return JsonResponse({'result' : result}, status=200)
 
