@@ -3,7 +3,7 @@ from django.db import models
 from account.models import User
 
 class Character(models.Model):
-    name = models.CharField(max_length=45, unique=True)
+    name     = models.CharField(max_length=45, unique=True)
     products = models.ManyToManyField('Product', through='CharacterProduct')
 
     class Meta:
